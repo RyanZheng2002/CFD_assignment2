@@ -27,3 +27,20 @@ d(phi)/dt = -U0 d(phi)/dx + Gamma d2(phi)/dx2
 with the same periodic domain and initial condition.
 
 Each script plots the numerical solution against the analytical solution so that stability, dissipative error, and dispersive error can be inspected visually.
+
+## Parameter Study Workflow
+
+Run the automated verification and parameter-study workflow from MATLAB with:
+
+```matlab
+run_assignment2_parameter_studies
+```
+
+The workflow writes report-ready outputs to:
+
+- `results_assignment2/figures/`
+- `results_assignment2/tables/`
+- `results_assignment2/data/`
+- `results_assignment2/numerical_audit_report.md`
+
+The original teaching/demo scripts remain standalone and are not modified by the workflow.
