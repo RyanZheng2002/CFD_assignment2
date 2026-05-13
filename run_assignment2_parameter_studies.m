@@ -3,10 +3,13 @@
 % Run from MATLAB with:
 %   run_assignment2_parameter_studies
 %
-% This script intentionally does not modify the original teaching scripts:
+% This script doesn't modify the original teaching scripts:
 %   conv_ee_fillin.m
 %   conv_ie_fillin.m
 %   conv_diff_cn_fillin.m
+%
+% Author: Ruiyang Zheng, ruiyang.zheng@tum.de
+% All rights reserved.
 
 format long;
 clear;
@@ -32,10 +35,13 @@ fprintf('Results directory: %s\n', results_dir);
 
 all_results = {};
 rows_EE_Courant = {};
+rows_EE_U0 = {};
 rows_EE_grid = {};
 rows_IE_Courant = {};
+rows_IE_U0 = {};
 rows_IE_grid = {};
 rows_CN_baseline_limits = {};
+rows_CN_U0 = {};
 rows_CN_Gamma = {};
 rows_CN_dt = {};
 rows_CN_grid = {};
@@ -74,12 +80,33 @@ for k = 1:numel(Courant_values_EE)
 end
 plot_history(EE2, 'L2_history', 'Relative L_2 error', ...
     'EE Courant study: relative L_2 error', ...
-    fullfile(fig_dir, 'EE_Courant_L2_history'));
+    fullfile(fig_dir, 'EE_Courant_L2_history'), true);
 plot_history(EE2, 'max_abs_phi_history', 'max(|\phi|)', ...
     'EE Courant study: max absolute solution value', ...
-    fullfile(fig_dir, 'EE_Courant_maxabs_history'));
-plot_profile(EE2{end}, 'EE profile distortion: C=1.00, t=2.0', ...
+    fullfile(fig_dir, 'EE_Courant_maxabs_history'), true);
+plot_profile(EE2{end}, 'EE profile distortion: C=1.00', ...
     fullfile(fig_dir, 'EE_Courant_1_profile'));
+
+% EE-2b: U0 sensitivity at fixed dt
+U0_values_EE = [0.5, 1.0, 2.0];
+points = 81;
+dt = 0.01;
+tend = 1.0;
+EE_U0 = cell(size(U0_values_EE));
+for k = 1:numel(U0_values_EE)
+    U0 = U0_values_EE(k);
+    result = solve_advection_ee(U0, points, dt, tend);
+    result.experiment_name = sprintf('EE-U0 U0 %.1f', U0);
+    EE_U0{k} = result;
+    all_results{end+1} = result; %#ok<SAGROW>
+    rows_EE_U0{end+1} = result; %#ok<SAGROW>
+end
+plot_history(EE_U0, 'L2_history', 'Relative L_2 error', ...
+    'EE U0 study: relative L_2 error', ...
+    fullfile(fig_dir, 'EE_U0_L2_history'), true);
+plot_history(EE_U0, 'max_abs_phi_history', 'max(|\phi|)', ...
+    'EE U0 study: max absolute solution value', ...
+    fullfile(fig_dir, 'EE_U0_maxabs_history'), true);
 
 % EE-3: grid-resolution comparison at fixed small Courant
 U0 = 1.0;
@@ -135,13 +162,34 @@ for k = 1:numel(Courant_values_IE)
 end
 plot_history(IE2, 'L2_history', 'Relative L_2 error', ...
     'IE Courant study: relative L_2 error', ...
-    fullfile(fig_dir, 'IE_Courant_L2_history'));
+    fullfile(fig_dir, 'IE_Courant_L2_history'), false);
 plot_history(IE2, 'amplitude_history', 'Numerical amplitude', ...
     'IE Courant study: amplitude history', ...
-    fullfile(fig_dir, 'IE_Courant_amplitude_history'));
+    fullfile(fig_dir, 'IE_Courant_amplitude_history'), false);
 plot_two_profiles(IE2{1}, IE2{end}, ...
     'IE final profiles: C=0.10 and C=2.00', ...
     fullfile(fig_dir, 'IE_Courant_profile_C010_C200'));
+
+% IE-2b: U0 sensitivity at fixed dt
+U0_values_IE = [0.5, 1.0, 2.0];
+points = 81;
+dt = 0.01;
+tend = 1.0;
+IE_U0 = cell(size(U0_values_IE));
+for k = 1:numel(U0_values_IE)
+    U0 = U0_values_IE(k);
+    result = solve_advection_ie(U0, points, dt, tend);
+    result.experiment_name = sprintf('IE-U0 U0 %.1f', U0);
+    IE_U0{k} = result;
+    all_results{end+1} = result; %#ok<SAGROW>
+    rows_IE_U0{end+1} = result; %#ok<SAGROW>
+end
+plot_history(IE_U0, 'L2_history', 'Relative L_2 error', ...
+    'IE U0 study: relative L_2 error', ...
+    fullfile(fig_dir, 'IE_U0_L2_history'), false);
+plot_history(IE_U0, 'amplitude_history', 'Numerical amplitude', ...
+    'IE U0 study: amplitude history', ...
+    fullfile(fig_dir, 'IE_U0_amplitude_history'), false);
 
 % IE-3: grid refinement at fixed Courant
 U0 = 1.0;
@@ -180,7 +228,7 @@ plot_profile(CN1, 'CN coupled advection-diffusion: U0=1, Gamma=0.1', ...
     fullfile(fig_dir, 'CN_baseline_profile'));
 plot_history({CN1}, 'L2_history', 'Relative L_2 error', ...
     'CN baseline: relative L_2 error', ...
-    fullfile(fig_dir, 'CN_baseline_L2_history'));
+    fullfile(fig_dir, 'CN_baseline_L2_history'), false);
 
 % CN-2: pure advection limit
 U0 = 1.0;
@@ -214,6 +262,29 @@ all_results{end+1} = CN3; %#ok<SAGROW>
 rows_CN_baseline_limits{end+1} = CN3; %#ok<SAGROW>
 plot_amplitude_vs_analytic(CN3, 'CN pure diffusion: amplitude decay', ...
     fullfile(fig_dir, 'CN_pure_diffusion_amplitude_history'));
+plot_profile(CN3, 'CN pure diffusion profile: U0=0, Gamma=0.1', ...
+    fullfile(fig_dir, 'CN_pure_diffusion_profile'));
+
+% CN-3b: U0 sensitivity at fixed physical diffusion
+U0_values_CN = [0.5, 1.0, 2.0];
+Gamma = 0.1;
+points = 161;
+dt = 0.005;
+tend = 1.0;
+CN_U0 = cell(size(U0_values_CN));
+for k = 1:numel(U0_values_CN)
+    U0 = U0_values_CN(k);
+    result = solve_advdiff_cn(U0, Gamma, points, dt, tend);
+    result.experiment_name = sprintf('CN-U0 U0 %.1f', U0);
+    CN_U0{k} = result;
+    all_results{end+1} = result; %#ok<SAGROW>
+    rows_CN_U0{end+1} = result; %#ok<SAGROW>
+end
+plot_multi_profiles(CN_U0, 'CN U0 study: final profiles', ...
+    fullfile(fig_dir, 'CN_U0_profiles'));
+plot_history(CN_U0, 'L2_history', 'Relative L_2 error', ...
+    'CN U0 study: relative L_2 error', ...
+    fullfile(fig_dir, 'CN_U0_L2_history'), false);
 
 % CN-4: effect of physical diffusion coefficient Gamma
 U0 = 1.0;
@@ -249,6 +320,8 @@ for k = 1:numel(dt_values)
     all_results{end+1} = result; %#ok<SAGROW>
     rows_CN_dt{end+1} = result; %#ok<SAGROW>
 end
+CN5 = add_observed_order(CN5, 'dt');
+rows_CN_dt = CN5;
 plot_final_metric_vs_dt(CN5, 'final_L2', 'Final relative L_2 error', ...
     'CN dt study: final L_2 error vs dt', ...
     fullfile(fig_dir, 'CN_dt_final_L2'));
@@ -268,28 +341,33 @@ for k = 1:numel(points_values_CN)
     all_results{end+1} = result; %#ok<SAGROW>
     rows_CN_grid{end+1} = result; %#ok<SAGROW>
 end
-plot_final_metric_vs_points(CN6, 'final_L2', 'Final relative L_2 error', ...
-    'CN grid study: final L_2 error vs points', ...
+CN6 = add_observed_order(CN6, 'dx');
+rows_CN_grid = CN6;
+plot_final_metric_vs_dx(CN6, 'final_L2', 'Final relative L_2 error', ...
+    'CN grid study: final L_2 error vs dx', ...
     fullfile(fig_dir, 'CN_grid_final_L2'));
 
 %% Export tables, data, and numerical audit report
 fprintf('[Output] Writing CSV tables, MAT data, and audit report...\n');
 
 write_result_table(rows_EE_Courant, fullfile(table_dir, 'table_EE_Courant_study.csv'));
+write_result_table(rows_EE_U0, fullfile(table_dir, 'table_EE_U0_study.csv'));
 write_result_table(rows_EE_grid, fullfile(table_dir, 'table_EE_grid_study.csv'));
 write_result_table(rows_IE_Courant, fullfile(table_dir, 'table_IE_Courant_study.csv'));
+write_result_table(rows_IE_U0, fullfile(table_dir, 'table_IE_U0_study.csv'));
 write_result_table(rows_IE_grid, fullfile(table_dir, 'table_IE_grid_study.csv'));
 write_result_table(rows_CN_baseline_limits, fullfile(table_dir, 'table_CN_baseline_and_limits.csv'));
+write_result_table(rows_CN_U0, fullfile(table_dir, 'table_CN_U0_study.csv'));
 write_result_table(rows_CN_Gamma, fullfile(table_dir, 'table_CN_Gamma_study.csv'));
 write_result_table(rows_CN_dt, fullfile(table_dir, 'table_CN_dt_study.csv'));
 write_result_table(rows_CN_grid, fullfile(table_dir, 'table_CN_grid_study.csv'));
 
 save(fullfile(data_dir, 'assignment2_parameter_study_results.mat'), ...
     'all_results', 'EE1', 'EE2', 'EE3', 'IE1', 'IE2', 'IE3', ...
-    'CN1', 'CN2', 'CN3', 'CN4', 'CN5', 'CN6');
+    'EE_U0', 'IE_U0', 'CN1', 'CN2', 'CN3', 'CN4', 'CN5', 'CN6', 'CN_U0');
 
 write_audit_report(fullfile(results_dir, 'numerical_audit_report.md'), ...
-    EE2, IE2, CN1, CN2, CN3, CN4, CN5, CN6);
+    EE2, EE_U0, IE2, IE_U0, CN1, CN2, CN3, CN_U0, CN4, CN5, CN6);
 
 fprintf('\nParameter studies complete.\n');
 fprintf('Figures: %s\n', fig_dir);
@@ -439,10 +517,14 @@ function result = init_result(solver, U0, Gamma, points, dx, dt, tend, tsteps)
     result.final_analytic_amplitude = NaN;
     result.max_abs_phi_final = NaN;
     result.amplitude_ratio_numeric_over_analytic = NaN;
+    result.actual_final_time = tend;
+    result.unstable_time = NaN;
+    result.observed_order = NaN;
     result.unstable_detected = false;
 end
 
 function result = update_diagnostics(result, phi, phi_a, t, index, analytic_amplitude)
+    result.actual_final_time = t;
     result.t(index) = t;
     result.L2_history(index) = relative_l2(phi, phi_a);
     result.Linf_history(index) = max(abs(phi - phi_a));
@@ -453,6 +535,9 @@ function result = update_diagnostics(result, phi, phi_a, t, index, analytic_ampl
 
     if any(~isfinite(phi)) || result.max_abs_phi_history(index) > 10.0
         result.unstable_detected = true;
+        if isnan(result.unstable_time)
+            result.unstable_time = t;
+        end
     end
 end
 
@@ -479,6 +564,27 @@ function result = finalize_result(result, x, phi, phi_a)
     result.max_abs_phi_final = last_finite(result.max_abs_phi_history);
     result.amplitude_ratio_numeric_over_analytic = ...
         result.final_amplitude / result.final_analytic_amplitude;
+end
+
+function results = add_observed_order(results, independent_field)
+    for k = 1:numel(results)
+        if k == 1
+            results{k}.observed_order = NaN;
+        else
+            previous = results{k-1};
+            current = results{k};
+            E1 = previous.final_L2;
+            E2 = current.final_L2;
+            h1 = previous.(independent_field);
+            h2 = current.(independent_field);
+
+            if E1 > 0 && E2 > 0 && h1 > 0 && h2 > 0 && h1 ~= h2
+                results{k}.observed_order = log(E1 / E2) / log(h1 / h2);
+            else
+                results{k}.observed_order = NaN;
+            end
+        end
+    end
 end
 
 function value = relative_l2(phi, phi_a)
@@ -543,7 +649,7 @@ function plot_profile(result, plot_title, output_base)
     box on;
     xlabel('x');
     ylabel('\phi');
-    title(plot_title, 'Interpreter', 'none');
+    title(title_with_stop_status(plot_title, result), 'Interpreter', 'none');
     legend('analytical', 'numerical', 'Location', 'best');
     add_parameter_text(result);
     save_figure(fig, output_base);
@@ -564,12 +670,41 @@ function plot_two_profiles(result_a, result_b, plot_title, output_base)
     save_figure(fig, output_base);
 end
 
-function plot_history(results, field_name, y_label, plot_title, output_base)
+function plot_multi_profiles(results, plot_title, output_base)
+    fig = make_figure();
+    colors = lines(numel(results));
+    hold on;
+    for k = 1:numel(results)
+        r = results{k};
+        plot(r.x, r.phi_analytic_final, '-', 'Color', colors(k,:), ...
+            'LineWidth', 1.5, 'DisplayName', ['analytic ' result_label(r)]);
+        plot(r.x, r.phi_final, '--', 'Color', colors(k,:), ...
+            'LineWidth', 1.5, 'DisplayName', ['numerical ' result_label(r)]);
+    end
+    grid on;
+    box on;
+    xlabel('x');
+    ylabel('\phi');
+    title(plot_title, 'Interpreter', 'none');
+    legend('Location', 'best');
+    save_figure(fig, output_base);
+end
+
+function plot_history(results, field_name, y_label, plot_title, output_base, use_log_y)
     fig = make_figure();
     hold on;
     for k = 1:numel(results)
         r = results{k};
-        plot(r.t, r.(field_name), 'LineWidth', 1.6, 'DisplayName', result_label(r));
+        y = r.(field_name);
+        finite_mask = isfinite(y) & isfinite(r.t);
+        if use_log_y
+            finite_mask = finite_mask & y > 0;
+            semilogy(r.t(finite_mask), y(finite_mask), 'LineWidth', 1.6, ...
+                'DisplayName', result_label(r));
+        else
+            plot(r.t(finite_mask), y(finite_mask), 'LineWidth', 1.6, ...
+                'DisplayName', result_label(r));
+        end
     end
     grid on;
     box on;
@@ -626,6 +761,21 @@ function plot_final_metric_vs_dt(results, metric_field, y_label, plot_title, out
     save_figure(fig, output_base);
 end
 
+function plot_final_metric_vs_dx(results, metric_field, y_label, plot_title, output_base)
+    dx_values = cellfun(@(r) r.dx, results);
+    metric = cellfun(@(r) r.(metric_field), results);
+
+    fig = make_figure();
+    loglog(dx_values, metric, 'bo-', 'LineWidth', 1.7, 'MarkerSize', 7);
+    set(gca, 'XDir', 'reverse');
+    grid on;
+    box on;
+    xlabel('\Delta x');
+    ylabel(y_label);
+    title(plot_title, 'Interpreter', 'none');
+    save_figure(fig, output_base);
+end
+
 function plot_final_metric_vs_points(results, metric_field, y_label, plot_title, output_base)
     points = cellfun(@(r) r.points, results);
     metric = cellfun(@(r) r.(metric_field), results);
@@ -651,7 +801,9 @@ function save_figure(fig, output_base)
 end
 
 function label = result_label(result)
-    if contains(result.experiment_name, 'Courant')
+    if contains(result.experiment_name, 'U0')
+        label = sprintf('U0=%.1f, C=%.2f', result.U0, result.Courant);
+    elseif contains(result.experiment_name, 'Courant')
         label = sprintf('C=%.2f', result.Courant);
     elseif contains(result.experiment_name, 'points')
         label = sprintf('N=%d', result.points);
@@ -662,14 +814,26 @@ function label = result_label(result)
     else
         label = result.experiment_name;
     end
+
+    if result.unstable_detected
+        label = sprintf('%s, stopped t=%.3g', label, result.unstable_time);
+    end
 end
 
 function add_parameter_text(result)
     text(0.02, 0.04, ...
-        sprintf('N=%d, dt=%.4g, C=%.3g, F=%.3g', ...
-        result.points, result.dt, result.Courant, result.Fourier_number), ...
+        sprintf('N=%d, dt=%.4g, C=%.3g, F=%.3g, actual t=%.4g', ...
+        result.points, result.dt, result.Courant, result.Fourier_number, ...
+        result.actual_final_time), ...
         'Units', 'normalized', 'FontSize', 10, ...
         'BackgroundColor', 'w', 'EdgeColor', [0.7 0.7 0.7]);
+end
+
+function plot_title = title_with_stop_status(plot_title, result)
+    if result.unstable_detected
+        plot_title = sprintf('%s\nstopped at t = %.4g due to instability', ...
+            plot_title, result.unstable_time);
+    end
 end
 
 %% Table and report writers
@@ -698,6 +862,9 @@ function write_result_table(results, filename)
     final_analytic_amplitude = NaN(n,1);
     amplitude_ratio_numeric_over_analytic = NaN(n,1);
     max_abs_phi_final = NaN(n,1);
+    actual_final_time = NaN(n,1);
+    unstable_time = NaN(n,1);
+    observed_order = NaN(n,1);
     unstable_detected = false(n,1);
 
     for k = 1:n
@@ -720,17 +887,21 @@ function write_result_table(results, filename)
         final_analytic_amplitude(k) = r.final_analytic_amplitude;
         amplitude_ratio_numeric_over_analytic(k) = r.amplitude_ratio_numeric_over_analytic;
         max_abs_phi_final(k) = r.max_abs_phi_final;
+        actual_final_time(k) = r.actual_final_time;
+        unstable_time(k) = r.unstable_time;
+        observed_order(k) = r.observed_order;
         unstable_detected(k) = r.unstable_detected;
     end
 
     T = table(experiment_name, solver, U0, Gamma, points, dx, dt, tend, tsteps, ...
         Courant, Fourier_number, final_L2, final_Linf, final_periodic_error, ...
         final_amplitude, final_analytic_amplitude, ...
-        amplitude_ratio_numeric_over_analytic, max_abs_phi_final, unstable_detected);
+        amplitude_ratio_numeric_over_analytic, max_abs_phi_final, actual_final_time, ...
+        unstable_time, observed_order, unstable_detected);
     writetable(T, filename);
 end
 
-function write_audit_report(filename, EE2, IE2, CN1, CN2, CN3, CN4, CN5, CN6)
+function write_audit_report(filename, EE2, EE_U0, IE2, IE_U0, CN1, CN2, CN3, CN_U0, CN4, CN5, CN6)
     fid = fopen(filename, 'w');
     if fid < 0
         error('Could not open audit report for writing: %s', filename);
@@ -763,12 +934,18 @@ function write_audit_report(filename, EE2, IE2, CN1, CN2, CN3, CN4, CN5, CN6)
         'for `Gamma > 0` the analytical amplitude is `exp(-Gamma*t)`.\n\n']);
     fprintf(fid, '- Representative EE-2 final periodic mismatch range: %.3e to %.3e.\n', ...
         min_cell_metric(EE2, 'final_periodic_error'), max_cell_metric(EE2, 'final_periodic_error'));
+    fprintf(fid, '- Representative EE U0-study stopping times: %.6g to %.6g.\n', ...
+        min_cell_metric(EE_U0, 'actual_final_time'), max_cell_metric(EE_U0, 'actual_final_time'));
     fprintf(fid, '- Representative IE-2 final periodic mismatch range: %.3e to %.3e.\n', ...
         min_cell_metric(IE2, 'final_periodic_error'), max_cell_metric(IE2, 'final_periodic_error'));
+    fprintf(fid, '- Representative IE U0-study final amplitude range: %.6g to %.6g.\n', ...
+        min_cell_metric(IE_U0, 'final_amplitude'), max_cell_metric(IE_U0, 'final_amplitude'));
     fprintf(fid, '- CN-1 final amplitude: numerical %.6g, analytical %.6g.\n', ...
         CN1.final_amplitude, CN1.final_analytic_amplitude);
-    fprintf(fid, '- CN-3 pure diffusion final amplitude: numerical %.6g, analytical %.6g.\n\n', ...
+    fprintf(fid, '- CN-3 pure diffusion final amplitude: numerical %.6g, analytical %.6g.\n', ...
         CN3.final_amplitude, CN3.final_analytic_amplitude);
+    fprintf(fid, '- CN U0-study final analytical amplitude is %.6g for all U0 values.\n\n', ...
+        CN_U0{1}.final_analytic_amplitude);
 
     fprintf(fid, '## 4. Results for Explicit Euler + Central Difference\n\n');
     fprintf(fid, ['The explicit central advection scheme exhibits unstable amplitude growth. ', ...
@@ -781,22 +958,29 @@ function write_audit_report(filename, EE2, IE2, CN1, CN2, CN3, CN4, CN5, CN6)
     fprintf(fid, '- `figures/EE_Courant_L2_history.png`\n');
     fprintf(fid, '- `figures/EE_Courant_maxabs_history.png`\n');
     fprintf(fid, '- `figures/EE_Courant_1_profile.png`\n');
+    fprintf(fid, '- `figures/EE_U0_L2_history.png`\n');
+    fprintf(fid, '- `figures/EE_U0_maxabs_history.png`\n');
     fprintf(fid, '- `figures/EE_grid_final_L2.png`\n');
     fprintf(fid, '- `tables/table_EE_Courant_study.csv`\n');
+    fprintf(fid, '- `tables/table_EE_U0_study.csv`\n');
     fprintf(fid, '- `tables/table_EE_grid_study.csv`\n\n');
 
     fprintf(fid, '## 5. Results for Implicit Euler + Central Difference\n\n');
     fprintf(fid, ['The implicit Euler scheme remains bounded for all tested Courant numbers. ', ...
         'However, larger Courant number increases numerical dissipation, which is visible ', ...
-        'as stronger amplitude decay and larger final L2 error.  This confirms that a ', ...
-        'stable scheme can still be inaccurate when the timestep is too large.\n\n']);
+        'as stronger amplitude decay and larger final L2 error.  The U0 sweep shows the same ', ...
+        'trend because larger U0 increases the Courant number when dt and dx are fixed.  ', ...
+        'This confirms that a stable scheme can still be inaccurate when the timestep is too large.\n\n']);
     fprintf(fid, 'Relevant outputs:\n');
     fprintf(fid, '- `figures/IE_baseline_profile.png`\n');
     fprintf(fid, '- `figures/IE_Courant_L2_history.png`\n');
     fprintf(fid, '- `figures/IE_Courant_amplitude_history.png`\n');
     fprintf(fid, '- `figures/IE_Courant_profile_C010_C200.png`\n');
+    fprintf(fid, '- `figures/IE_U0_L2_history.png`\n');
+    fprintf(fid, '- `figures/IE_U0_amplitude_history.png`\n');
     fprintf(fid, '- `figures/IE_grid_final_L2.png`\n');
     fprintf(fid, '- `tables/table_IE_Courant_study.csv`\n');
+    fprintf(fid, '- `tables/table_IE_U0_study.csv`\n');
     fprintf(fid, '- `tables/table_IE_grid_study.csv`\n\n');
 
     fprintf(fid, '## 6. Results for Crank-Nicolson Advection-Diffusion\n\n');
@@ -815,6 +999,12 @@ function write_audit_report(filename, EE2, IE2, CN1, CN2, CN3, CN4, CN5, CN6)
         'while the amplitude decays approximately as `exp(-Gamma*t)`.  The pure diffusion ', ...
         'final relative L2 error is %.3e.\n\n'], CN3.final_L2);
 
+    fprintf(fid, '### 6.3b U0 sensitivity at fixed Gamma\n\n');
+    fprintf(fid, ['With fixed `Gamma = 0.1`, all U0 cases have the same analytical amplitude ', ...
+        'decay `exp(-0.1)`.  Changing U0 changes the translation distance and Courant number, ', ...
+        'so phase/dispersive error can vary while the final amplitudes remain close to the ', ...
+        'same analytical value.\n\n']);
+
     fprintf(fid, '### 6.4 Gamma sensitivity\n\n');
     fprintf(fid, ['Increasing `Gamma` increases physical damping.  The final numerical amplitudes ', ...
         'track the analytical amplitudes in `figures/CN_Gamma_final_amplitude.png`.\n\n']);
@@ -829,10 +1019,14 @@ function write_audit_report(filename, EE2, IE2, CN1, CN2, CN3, CN4, CN5, CN6)
     fprintf(fid, '- `figures/CN_baseline_L2_history.png`\n');
     fprintf(fid, '- `figures/CN_pure_advection_C100_profile.png`\n');
     fprintf(fid, '- `figures/CN_pure_diffusion_amplitude_history.png`\n');
+    fprintf(fid, '- `figures/CN_pure_diffusion_profile.png`\n');
+    fprintf(fid, '- `figures/CN_U0_profiles.png`\n');
+    fprintf(fid, '- `figures/CN_U0_L2_history.png`\n');
     fprintf(fid, '- `figures/CN_Gamma_final_amplitude.png`\n');
     fprintf(fid, '- `figures/CN_dt_final_L2.png`\n');
     fprintf(fid, '- `figures/CN_grid_final_L2.png`\n');
     fprintf(fid, '- `tables/table_CN_baseline_and_limits.csv`\n');
+    fprintf(fid, '- `tables/table_CN_U0_study.csv`\n');
     fprintf(fid, '- `tables/table_CN_Gamma_study.csv`\n');
     fprintf(fid, '- `tables/table_CN_dt_study.csv`\n');
     fprintf(fid, '- `tables/table_CN_grid_study.csv`\n\n');

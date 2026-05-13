@@ -19,9 +19,12 @@ The goal of this workflow is to verify the analytical solution implementation, t
 The periodic mismatch should remain close to machine precision because `x=0` and `x=2*pi` represent the same physical point.  For `U0 > 0`, the sine wave should propagate in the positive x direction.  For `U0 = 0`, no translation should occur.  For `Gamma = 0`, the analytical solution has no physical amplitude decay, while for `Gamma > 0` the analytical amplitude is `exp(-Gamma*t)`.
 
 - Representative EE-2 final periodic mismatch range: 0.000e+00 to 4.441e-16.
+- Representative EE U0-study stopping times: 1 to 1.
 - Representative IE-2 final periodic mismatch range: 0.000e+00 to 6.661e-16.
+- Representative IE U0-study final amplitude range: 0.97967 to 0.998355.
 - CN-1 final amplitude: numerical 0.904703, analytical 0.904837.
 - CN-3 pure diffusion final amplitude: numerical 0.904849, analytical 0.904837.
+- CN U0-study final analytical amplitude is 0.904837 for all U0 values.
 
 ## 4. Results for Explicit Euler + Central Difference
 
@@ -32,21 +35,27 @@ Relevant outputs:
 - `figures/EE_Courant_L2_history.png`
 - `figures/EE_Courant_maxabs_history.png`
 - `figures/EE_Courant_1_profile.png`
+- `figures/EE_U0_L2_history.png`
+- `figures/EE_U0_maxabs_history.png`
 - `figures/EE_grid_final_L2.png`
 - `tables/table_EE_Courant_study.csv`
+- `tables/table_EE_U0_study.csv`
 - `tables/table_EE_grid_study.csv`
 
 ## 5. Results for Implicit Euler + Central Difference
 
-The implicit Euler scheme remains bounded for all tested Courant numbers. However, larger Courant number increases numerical dissipation, which is visible as stronger amplitude decay and larger final L2 error.  This confirms that a stable scheme can still be inaccurate when the timestep is too large.
+The implicit Euler scheme remains bounded for all tested Courant numbers. However, larger Courant number increases numerical dissipation, which is visible as stronger amplitude decay and larger final L2 error.  The U0 sweep shows the same trend because larger U0 increases the Courant number when dt and dx are fixed.  This confirms that a stable scheme can still be inaccurate when the timestep is too large.
 
 Relevant outputs:
 - `figures/IE_baseline_profile.png`
 - `figures/IE_Courant_L2_history.png`
 - `figures/IE_Courant_amplitude_history.png`
 - `figures/IE_Courant_profile_C010_C200.png`
+- `figures/IE_U0_L2_history.png`
+- `figures/IE_U0_amplitude_history.png`
 - `figures/IE_grid_final_L2.png`
 - `tables/table_IE_Courant_study.csv`
+- `tables/table_IE_U0_study.csv`
 - `tables/table_IE_grid_study.csv`
 
 ## 6. Results for Crank-Nicolson Advection-Diffusion
@@ -63,6 +72,10 @@ With `Gamma = 0`, no physical amplitude decay is present.  The solution stays bo
 
 With `U0 = 0`, the wave does not translate.  The sinusoidal shape is preserved while the amplitude decays approximately as `exp(-Gamma*t)`.  The pure diffusion final relative L2 error is 1.285e-05.
 
+### 6.3b U0 sensitivity at fixed Gamma
+
+With fixed `Gamma = 0.1`, all U0 cases have the same analytical amplitude decay `exp(-0.1)`.  Changing U0 changes the translation distance and Courant number, so phase/dispersive error can vary while the final amplitudes remain close to the same analytical value.
+
 ### 6.4 Gamma sensitivity
 
 Increasing `Gamma` increases physical damping.  The final numerical amplitudes track the analytical amplitudes in `figures/CN_Gamma_final_amplitude.png`.
@@ -76,10 +89,14 @@ Relevant outputs:
 - `figures/CN_baseline_L2_history.png`
 - `figures/CN_pure_advection_C100_profile.png`
 - `figures/CN_pure_diffusion_amplitude_history.png`
+- `figures/CN_pure_diffusion_profile.png`
+- `figures/CN_U0_profiles.png`
+- `figures/CN_U0_L2_history.png`
 - `figures/CN_Gamma_final_amplitude.png`
 - `figures/CN_dt_final_L2.png`
 - `figures/CN_grid_final_L2.png`
 - `tables/table_CN_baseline_and_limits.csv`
+- `tables/table_CN_U0_study.csv`
 - `tables/table_CN_Gamma_study.csv`
 - `tables/table_CN_dt_study.csv`
 - `tables/table_CN_grid_study.csv`
